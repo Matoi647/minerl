@@ -203,6 +203,7 @@ class Discrete(gym.spaces.Discrete, MineRLSpace):
     def __init__(self, *args, **kwargs):
         super(Discrete, self).__init__(*args, **kwargs)
         self.eye = np.eye(self.n, dtype=np.float32)
+        self.shape = ()
 
     def no_op(self, batch_shape=()):
         if len(batch_shape) == 0:
@@ -461,7 +462,7 @@ class Text(MineRLSpace):
     self.observation_space = spaces.Text(1)
     """
 
-    def no_op(self):
+    def no_op(self, batch_shape=None):
         return ""
 
     def create_flattened_space(self):
