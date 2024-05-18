@@ -2310,7 +2310,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +    private final static int interactTagLength = "<Interact>".length();
 +
 +    private void interact(String command, Socket socket) throws IOException {
-
++
 +        lock.lock();
 +        try {
 +            String token = command.substring(interactTagLength, command.length() - (interactTagLength + 1));
