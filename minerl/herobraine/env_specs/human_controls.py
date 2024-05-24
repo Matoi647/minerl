@@ -67,7 +67,7 @@ class HumanControlEnvSpec(EnvSpec, ABC):
         """
         return [
            H.KeybasedCommandAction(v, v) for v in mc.KEYMAP.values()
-        ] + [H.CameraAction()]
+        ] + [H.CameraAction()] + [H.ChatAction()]
 
     def create_monitors(self) -> List[TranslationHandler]:
         return [H.IsGuiOpen(), H.ObservationFromCurrentLocation()]
