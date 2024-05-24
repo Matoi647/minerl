@@ -1818,7 +1818,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/RandomHelper
 diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServer.java MCP-Reborn/src/main/java/com/minerl/multiagent/env/EnvServer.java
 --- MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServer.java	1970-01-01 01:00:00.000000000 +0100
 +++ MCP-Reborn/src/main/java/com/minerl/multiagent/env/EnvServer.java	2022-06-23 00:28:31.911515382 +0100
-@@ -0,0 +1,727 @@
+@@ -0,0 +1,774 @@
 +package com.minerl.multiagent.env;
 +
 +import com.google.common.base.Charsets;
@@ -1827,6 +1827,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +import com.google.gson.JsonObject;
 +import com.microsoft.Malmo.Schemas.*;
 +import com.microsoft.Malmo.Utils.JSONWorldDataHelper;
++import com.microsoft.Malmo.Utils.TCPUtils;
 +import com.minerl.multiagent.RandomHelper;
 +import com.minerl.multiagent.recorder.AzureUpload;
 +import com.minerl.multiagent.recorder.PlayRecorder;
@@ -1834,6 +1835,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +import net.minecraft.client.entity.player.ClientPlayerEntity;
 +import net.minecraft.client.gui.screen.ConnectingScreen;
 +import net.minecraft.client.gui.screen.MainMenuScreen;
++import net.minecraft.client.gui.GuiScreen;
 +import net.minecraft.client.multiplayer.ServerAddress;
 +import net.minecraft.client.multiplayer.ServerData;
 +import net.minecraft.entity.player.PlayerEntity;
@@ -1946,6 +1948,10 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +                                } else if (command.startsWith("<Peek")) {
 +
 +                                    peek(command, socket, din);
++
++                                } else if (command.startsWith("<Interact")) {
++
++                                    interact(command, socket);
 +
 +                                } else if (command.startsWith("<MissionInit")) {
 +
@@ -2298,6 +2304,47 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +        dout.write(infoBytes);
 +        dout.writeInt(1);
 +        dout.writeByte(done ? 1 : 0);
++        dout.flush();
++    }
++
++    // Handler for interact (which connects a client to an IP via multiplayer.).
++
++    private final static int interactTagLength = "<Interact>".length();
++
++    private void interact(String command, Socket socket) throws IOException {
++
++        lock.lock();
++        try {
++            String token = command.substring(interactTagLength, command.length() - (interactTagLength + 1));
++            TCPUtils.Log(Level.INFO, "Find token? " + token);
++
++            // Purge previous token.
++            String[] tokenSplits = token.split(":");            String ip = tokenSplits[0];
++            String port = tokenSplits[1];
++            //Print the ip and port
++            final ServerData sd = new ServerData("agent server", ip + ":" + port, false);
++            net.minecraftforge.fml.client.FMLClientHandler.instance().getClient().addScheduledTask(new Runnable() {
++                public void run() {
++                    GuiScreen old_gui = net.minecraftforge.fml.client.FMLClientHandler.instance().getClient().currentScreen;
++                    net.minecraftforge.fml.client.FMLClientHandler.instance().setupServerList();
++                    net.minecraftforge.fml.client.FMLClientHandler.instance().connectToServer(old_gui, sd);
++                }
++            });
++            
++            // Bad menu behaviour
++            // this.inputController.setInputType(InputType.HUMAN);
++            Minecraft.getMinecraft().mouseHelper = this.inputController.originalMouseHelper;
++            System.setProperty("fml.noGrab", "false");
++            // Minecraft.getMinecraft().mouseHelper.grabMouseCursor();
++           
++
++        } finally {
++            lock.unlock();
++        }
++        // Say that we r done.
++        DataOutputStream dout = new DataOutputStream(socket.getOutputStream());
++        dout.writeInt(BYTES_INT);
++        dout.writeInt(1);
 +        dout.flush();
 +    }
 +
