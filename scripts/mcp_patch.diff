@@ -1818,7 +1818,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/RandomHelper
 diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServer.java MCP-Reborn/src/main/java/com/minerl/multiagent/env/EnvServer.java
 --- MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServer.java	1970-01-01 01:00:00.000000000 +0100
 +++ MCP-Reborn/src/main/java/com/minerl/multiagent/env/EnvServer.java	2022-06-23 00:28:31.911515382 +0100
-@@ -0,0 +1,774 @@
+@@ -0,0 +1,755 @@
 +package com.minerl.multiagent.env;
 +
 +import com.google.common.base.Charsets;
@@ -1827,7 +1827,6 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +import com.google.gson.JsonObject;
 +import com.microsoft.Malmo.Schemas.*;
 +import com.microsoft.Malmo.Utils.JSONWorldDataHelper;
-+import com.microsoft.Malmo.Utils.TCPUtils;
 +import com.minerl.multiagent.RandomHelper;
 +import com.minerl.multiagent.recorder.AzureUpload;
 +import com.minerl.multiagent.recorder.PlayRecorder;
@@ -1835,7 +1834,6 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +import net.minecraft.client.entity.player.ClientPlayerEntity;
 +import net.minecraft.client.gui.screen.ConnectingScreen;
 +import net.minecraft.client.gui.screen.MainMenuScreen;
-+import net.minecraft.client.gui.GuiScreen;
 +import net.minecraft.client.multiplayer.ServerAddress;
 +import net.minecraft.client.multiplayer.ServerData;
 +import net.minecraft.entity.player.PlayerEntity;
@@ -2157,7 +2155,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +            Minecraft.getInstance().getSession().setUsername(username);
 +        }
 +    }
-+    
++
 +    private void setGameSetttings(MissionInit missionInit) {
 +        Minecraft mc = Minecraft.getInstance();
 +        GameSettings settings = mc.gameSettings;
@@ -2307,47 +2305,6 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +        dout.flush();
 +    }
 +
-+    // Handler for interact (which connects a client to an IP via multiplayer.).
-+
-+    private final static int interactTagLength = "<Interact>".length();
-+
-+    private void interact(String command, Socket socket) throws IOException {
-+
-+        lock.lock();
-+        try {
-+            String token = command.substring(interactTagLength, command.length() - (interactTagLength + 1));
-+            TCPUtils.Log(Level.INFO, "Find token? " + token);
-+
-+            // Purge previous token.
-+            String[] tokenSplits = token.split(":");            String ip = tokenSplits[0];
-+            String port = tokenSplits[1];
-+            //Print the ip and port
-+            final ServerData sd = new ServerData("agent server", ip + ":" + port, false);
-+            net.minecraftforge.fml.client.FMLClientHandler.instance().getClient().addScheduledTask(new Runnable() {
-+                public void run() {
-+                    GuiScreen old_gui = net.minecraftforge.fml.client.FMLClientHandler.instance().getClient().currentScreen;
-+                    net.minecraftforge.fml.client.FMLClientHandler.instance().setupServerList();
-+                    net.minecraftforge.fml.client.FMLClientHandler.instance().connectToServer(old_gui, sd);
-+                }
-+            });
-+            
-+            // Bad menu behaviour
-+            // this.inputController.setInputType(InputType.HUMAN);
-+            Minecraft.getMinecraft().mouseHelper = this.inputController.originalMouseHelper;
-+            System.setProperty("fml.noGrab", "false");
-+            // Minecraft.getMinecraft().mouseHelper.grabMouseCursor();
-+           
-+
-+        } finally {
-+            lock.unlock();
-+        }
-+        // Say that we r done.
-+        DataOutputStream dout = new DataOutputStream(socket.getOutputStream());
-+        dout.writeInt(BYTES_INT);
-+        dout.writeInt(1);
-+        dout.flush();
-+    }
-+
 +    private byte[] getPOVObservation() {
 +        return PlayRecorder.getInstance().getLastImageBytes();
 +    }
@@ -2402,7 +2359,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +    private Stream<Object> getAgentHandlers() {
 +        return missionInit.getMission().getAgentSection().get(0).getAgentHandlers().getAgentMissionHandlers().stream();
 +    }
-+    
++
 +    private static ServerInitialConditions getServerInit(MissionInit missionInit) {
 +        return missionInit.getMission().getServerSection().getServerInitialConditions();
 +    }
@@ -2441,7 +2398,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +        }
 +        return result;
 +    }
-+    
++
 +    public static JsonObject getEquippedItemJson() {
 +        JsonObject result = new JsonObject();
 +        PlayerEntity player = Minecraft.getInstance().player;
@@ -2471,8 +2428,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +        PlayRecorder.getInstance().setMouseKeyboardState(mouseState, keysState);
 +        ReplaySender.getInstance().addAction(mouseState, keysState);
 +    }
-+    
-+    
++
 +    public static void doChatActions(String actions) {
 +        for (String action: actions.split("\n")) {
 +           String[] splitAction = action.trim().split(" ");
@@ -2482,7 +2438,6 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +           }
 +        }
 +    }
-+
 +    private static KeyboardListener.State constructKeyboardState(String actions) {
 +        List<String> keysPressed = new ArrayList<>();
 +        for (String action: actions.split("\n")) {
@@ -2572,6 +2527,32 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +
 +    void stepServer(String command, Socket socket) {
 +        // step server
++    }
++    
++    // Handler for interact (which connects a client to an IP via multiplayer.).
++
++    private final static int interactTagLength = "<Interact>".length();
++
++    private void interact(String command, Socket socket) throws IOException {
++
++        String token = command.substring(interactTagLength, command.length() - (interactTagLength + 1));
++        LOGGER.info("Find token? " + token);
++
++        // Purge previous token.
++        String[] tokenSplits = token.split(":");
++        String ip = tokenSplits[0];
++        String port = tokenSplits[1];
++        //Print the ip and port
++        final ServerData sd = new ServerData("agent server", ip + ":" + port, false);
++
++        Minecraft mc = Minecraft.getInstance();
++        mc.displayGuiScreen(new ConnectingScreen(new MainMenuScreen(false), mc, serverData));
++           
++        // Say that we r done.
++        DataOutputStream dout = new DataOutputStream(socket.getOutputStream());
++        dout.writeInt(BYTES_INT);
++        dout.writeInt(1);
++        dout.flush();
 +    }
 +
 +    // Handler for <Quit> (quit mission) messages.
