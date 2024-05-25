@@ -2546,7 +2546,7 @@ diff -u1 -rN MCP-Reborn-vanilla/src/main/java/com/minerl/multiagent/env/EnvServe
 +        final ServerData sd = new ServerData("agent server", ip + ":" + port, false);
 +
 +        Minecraft mc = Minecraft.getInstance();
-+        mc.displayGuiScreen(new ConnectingScreen(new MainMenuScreen(false), mc, serverData));
++        mc.displayGuiScreen(new ConnectingScreen(new MainMenuScreen(false), mc, sd));
 +           
 +        // Say that we r done.
 +        DataOutputStream dout = new DataOutputStream(socket.getOutputStream());
